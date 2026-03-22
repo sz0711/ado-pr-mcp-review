@@ -112,3 +112,14 @@ Fix:
 The demo plugin intentionally uses non-existing Dataverse fields so MCP review can confirm schema validation works.
 
 If review is configured correctly, it should report critical findings for invalid attributes and runtime safety issues.
+
+## ⚠️ Disclaimer
+
+This repository is a private project.
+
+It is provided without any warranty, guarantee, or representation of any kind.
+Use is entirely at your own risk. The author accepts no liability for direct or
+indirect damages, data loss, outages, or any other consequences resulting from
+the use of this project.
+
+---
