@@ -7,6 +7,21 @@ It contains:
 - 🔍 A strict Copilot review prompt that enforces Dataverse schema and runnability checks
 - 🧪 A demo Dataverse plugin with intentional schema issues for validation testing
 
+## 🔌 Required Azure DevOps extension
+
+This package is designed to run with the Azure DevOps extension:
+
+- `ado-copilot-code-review` by LittleFortSoftware
+- Marketplace: https://marketplace.visualstudio.com/items?itemName=LittleFortSoftware.ado-copilot-code-review
+
+Why this is required:
+- The pipeline in this package calls the extension task that triggers Copilot-based pull request review in Azure DevOps.
+- Without this extension installed in your Azure DevOps organization, the review task in `azure-pipelines.yml` cannot run.
+
+Setup note:
+- Install the extension in your Azure DevOps organization before running the pipeline.
+- Ensure the pipeline has access to the extension task and to the required variables in `vg-dataverse-mcp-ci`.
+
 <img width="1528" height="786" alt="image" src="https://github.com/user-attachments/assets/6333bd44-1344-445b-ae39-cf5666129339" />
 
 ## 📁 Folder structure
@@ -23,6 +38,7 @@ Before running the pipeline, make sure the following are ready:
 2. A Microsoft Entra app registration exists for machine-to-machine auth.
 3. The app has access for Dataverse MCP and is allowed in Dataverse MCP client settings.
 4. Your Azure DevOps project has a variable group named `vg-dataverse-mcp-ci`.
+5. The Azure DevOps extension `ado-copilot-code-review` (LittleFortSoftware) is installed in your organization.
 
 ## 🔐 Required Azure DevOps variable group
 
