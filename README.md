@@ -7,6 +7,8 @@ It contains:
 - 🔍 A strict Copilot review prompt that enforces Dataverse schema and runnability checks
 - 🧪 A demo Dataverse plugin with intentional schema issues for validation testing
 
+<img width="1528" height="786" alt="image" src="https://github.com/user-attachments/assets/6333bd44-1344-445b-ae39-cf5666129339" />
+
 ## 📁 Folder structure
 
 - `templates/azure-pipelines.yml`
@@ -94,5 +96,3 @@ Fix:
 The demo plugin intentionally uses non-existing Dataverse fields so MCP review can confirm schema validation works.
 
 If review is configured correctly, it should report critical findings for invalid attributes and runtime safety issues.
-
-<img width="1528" height="786" alt="image" src="https://github.com/user-attachments/assets/6333bd44-1344-445b-ae39-cf5666129339" />
