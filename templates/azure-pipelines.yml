@@ -1,0 +1,94 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: vg-dataverse-mcp-ci
+
+steps:
+- task: NodeTool@0
+  displayName: 'Use Node 20'
+  inputs:
+    versionSpec: '20.x'
+
+- task: PowerShell@2
+  displayName: 'Install Copilot CLI'
+  inputs:
+    targetType: 'inline'
+    pwsh: true
+    script: |
+      $ErrorActionPreference = 'Stop'
+      Write-Host "Installing GitHub Copilot CLI..."
+      npm install -g @github/copilot
+      Write-Host "Installation complete. Testing..."
+      copilot --version
+
+- task: PowerShell@2
+  displayName: 'Configure Dataverse MCP Server'
+  inputs:
+    targetType: 'inline'
+    pwsh: true
+    script: |
+      $ErrorActionPreference = 'Stop'
+
+      $clientId     = '$(dataverseClientId)'
+      $clientSecret = '$(dataverseClientSecret)'
+      $tenantId     = '$(dataverseTenantId)'
+      $baseUrl      = '$(dataverseUrl)'
+
+      $missing = @()
+      if ([string]::IsNullOrWhiteSpace($clientId))    { $missing += 'dataverseClientId' }
+      if ([string]::IsNullOrWhiteSpace($clientSecret)){ $missing += 'dataverseClientSecret' }
+      if ([string]::IsNullOrWhiteSpace($tenantId))    { $missing += 'dataverseTenantId' }
+      if ([string]::IsNullOrWhiteSpace($baseUrl))     { $missing += 'dataverseUrl' }
+      if ($missing.Count -gt 0) {
+        throw "Missing required pipeline variables: $($missing -join ', ')"
+      }
+
+      $baseUrl = $baseUrl.TrimEnd('/')
+      if (-not $baseUrl.StartsWith('https://')) {
+        throw 'dataverseUrl must start with https://'
+      }
+
+      $path = '$(dataverseMcpEndpointPath)'
+      if ([string]::IsNullOrWhiteSpace($path) -or $path -eq '$(dataverseMcpEndpointPath)') {
+        $path = '/api/mcp'
+      }
+      if (-not $path.StartsWith('/')) {
+        $path = '/' + $path
+      }
+      $endpoint = "$baseUrl$path"
+
+      $copilotDir = "$env:HOME/.copilot"
+      if (-not (Test-Path $copilotDir)) {
+        New-Item -ItemType Directory -Path $copilotDir -Force | Out-Null
+      }
+
+      $mcpConfig = @{
+        mcpServers = @{
+          dataverse = @{
+            transport = 'http'
+            url       = $endpoint
+            auth      = @{
+              type         = 'clientCredentials'
+              tenantId     = $tenantId
+              clientId     = $clientId
+              clientSecret = $clientSecret
+            }
+          }
+        }
+      }
+
+      $configPath = Join-Path $copilotDir 'mcp-config.json'
+      $mcpConfig | ConvertTo-Json -Depth 12 | Out-File -FilePath $configPath -Encoding utf8
+
+      Write-Host "MCP config written to $configPath"
+      Write-Host "Configured MCP server: dataverse"
+      Write-Host "Configured endpoint: $endpoint"
+
+- task: CopilotCodeReview@1
+  inputs:
+    githubPat: '$(githubpat)'
+    useSystemAccessToken: true
+    promptFile: '$(Build.SourcesDirectory)/copilotScripts/review-prompt.md'
