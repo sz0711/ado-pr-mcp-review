@@ -1,125 +1,108 @@
-# 🚀 Dataverse MCP Setup Package for Azure DevOps + Copilot Code Review
+# 🔍 ado-pr-mcp-review
 
-This folder is a portable setup package you can move into another GitHub repository.
+> AI-powered pull request review for Azure DevOps, backed by Dataverse MCP schema validation.
 
-It contains:
-- ✅ A production-ready Azure Pipelines template for Dataverse MCP
-- 🔍 A strict Copilot review prompt that enforces Dataverse schema and runnability checks
-- 🧪 A demo Dataverse plugin with intentional schema issues for validation testing
-
-## 🔌 Required Azure DevOps extension
-
-This package is designed to run with the Azure DevOps extension:
-
-- `ado-copilot-code-review` by LittleFortSoftware
-- Marketplace: https://marketplace.visualstudio.com/items?itemName=LittleFortSoftware.ado-copilot-code-review
-
-Why this is required:
-- The pipeline in this package calls the extension task that triggers Copilot-based pull request review in Azure DevOps.
-- Without this extension installed in your Azure DevOps organization, the review task in `azure-pipelines.yml` cannot run.
-
-Setup note:
-- Install the extension in your Azure DevOps organization before running the pipeline.
-- Ensure the pipeline has access to the extension task and to the required variables in `vg-dataverse-mcp-ci`.
-
-<img width="1528" height="786" alt="image" src="https://github.com/user-attachments/assets/6333bd44-1344-445b-ae39-cf5666129339" />
-
-## 📁 Folder structure
-
-- `templates/azure-pipelines.yml`
-- `templates/copilotScripts/review-prompt.md`
-- `templates/Plugins/AccountUpdatePlugin.cs`
-
-## 🧰 Prerequisites
-
-Before running the pipeline, make sure the following are ready:
-
-1. Dataverse MCP is enabled in your target environment.
-2. A Microsoft Entra app registration exists for machine-to-machine auth.
-3. The app has access for Dataverse MCP and is allowed in Dataverse MCP client settings.
-4. Your Azure DevOps project has a variable group named `vg-dataverse-mcp-ci`.
-5. The Azure DevOps extension `ado-copilot-code-review` (LittleFortSoftware) is installed in your organization.
-
-## 🔐 Required Azure DevOps variable group
-
-Create variable group: `vg-dataverse-mcp-ci`
-
-Required variables:
-- `dataverseClientId`
-- `dataverseClientSecret` (mark as secret)
-- `dataverseTenantId`
-- `dataverseUrl` (example: `https://yourorg.crm.dynamics.com`)
-
-Optional variables:
-- `dataverseMcpEndpointPath` (default: `/api/mcp`)
-- `githubpat` (if not already managed elsewhere)
-
-## 📦 Install into another repository
-
-1. Copy this whole folder into your target repository.
-2. Copy `templates/azure-pipelines.yml` to repository root as `azure-pipelines.yml` (or merge it into your existing pipeline).
-3. Copy `templates/copilotScripts/review-prompt.md` to `copilotScripts/review-prompt.md`.
-4. Optional: copy `templates/Plugins/AccountUpdatePlugin.cs` if you want a demo plugin for MCP validation.
-5. In Azure DevOps, link variable group `vg-dataverse-mcp-ci` to the pipeline.
-6. Run pipeline and verify the log line `Configured endpoint:` resolves to a real path (for example `/api/mcp`) and not a placeholder.
-
-## ✅ Validation checklist
-
-- Pipeline succeeds in `Configure Dataverse MCP Server`.
-- Generated config path exists in agent home: `~/.copilot/mcp-config.json`.
-- Copilot code review starts without prompt format errors.
-- Dataverse schema findings are reported for invalid fields in the demo plugin.
-
-## 🛠️ Common issues
-
-### 1) ⚠️ Endpoint shows placeholder instead of real path
-
-Symptom:
-- `Configured endpoint: https://org.crm.dynamics.com/$(dataverseMcpEndpointPath)`
-
-Cause:
-- Optional variable not set and unresolved macro remained literal.
-
-Fix:
-- Keep the fallback logic from the template (already included).
-
-### 2) ⚠️ Prompt rejected due to invalid characters
-
-Symptom:
-- Custom prompt task fails because of unsupported characters.
-
-Fix:
-- Keep review prompt ASCII-only.
-- Do not use double quote characters.
-
-### 3) ⚠️ MCP cannot validate schema
-
-Symptom:
-- Review says Dataverse MCP is not reachable.
-
-Fix:
-- Verify client id/secret/tenant/url values.
-- Verify Dataverse MCP environment and allowed client configuration.
-
-## 🔒 Security notes
-
-- Never print `dataverseClientSecret` in logs.
-- Keep secrets only in Azure DevOps secret variables or Key Vault-linked variables.
-- Use least privilege for the Entra app.
-
-## 🧪 What this package tests
-
-The demo plugin intentionally uses non-existing Dataverse fields so MCP review can confirm schema validation works.
-
-If review is configured correctly, it should report critical findings for invalid attributes and runtime safety issues.
-
-## ⚠️ Disclaimer
-
-This repository is a private project.
-
-It is provided without any warranty, guarantee, or representation of any kind.
-Use is entirely at your own risk. The author accepts no liability for direct or
-indirect damages, data loss, outages, or any other consequences resulting from
-the use of this project.
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
+[![Status](https://img.shields.io/badge/status-active-blue)]()
 
 ---
+
+## Overview
+
+Portable setup package that wires **GitHub Copilot** into an **Azure DevOps pipeline** and points it at the **Dataverse MCP server** for live schema-aware code review. Drop the templates into any repository, configure four pipeline variables, and every pull request gets an automated review that validates Dataverse entity fields, plugin runnability, and performance risks against the real environment schema.
+
+### Key Capabilities
+
+- **Schema validation** — Copilot queries the Dataverse MCP to verify every field name, type, and relationship used in plugin code
+- **Runnability checks** — validates pre-image requirements, target payload semantics, and safe-write patterns
+- **Performance analysis** — flags N+1 patterns, `AllColumns` usage, synchronous-stage cost, and throttling risks
+- **Strict output rules** — ASCII-only, no style comments, no praise; only actionable findings
+- **Zero-config endpoint fallback** — pipeline defaults to `/api/mcp` when `dataverseMcpEndpointPath` is not set
+
+<img width="1528" height="786" alt="Pipeline screenshot" src="https://github.com/user-attachments/assets/6333bd44-1344-445b-ae39-cf5666129339" />
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+1. **Dataverse MCP** enabled in the target Power Platform environment
+2. **Microsoft Entra app registration** with `Dynamics CRM / user_impersonation` permission, registered as Application User in Power Platform Admin Center
+3. **Azure DevOps extension** `ado-copilot-code-review` by LittleFortSoftware installed in your organization
+   - Marketplace: <https://marketplace.visualstudio.com/items?itemName=LittleFortSoftware.ado-copilot-code-review>
+4. **Variable group** `vg-dataverse-mcp-ci` linked to the pipeline (see below)
+
+### Variable Group
+
+Create variable group `vg-dataverse-mcp-ci` in Azure DevOps:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `dataverseClientId` | ✅ | Entra app client ID |
+| `dataverseClientSecret` | ✅ | Client secret (mark as secret) |
+| `dataverseTenantId` | ✅ | Entra tenant ID |
+| `dataverseUrl` | ✅ | Environment URL, e.g. `https://yourorg.crm.dynamics.com` |
+| `dataverseMcpEndpointPath` | | MCP path (default: `/api/mcp`) |
+| `githubpat` | | GitHub PAT if not managed elsewhere |
+
+### Install
+
+1. Copy the `templates/` folder into your target repository.
+2. Copy `templates/azure-pipelines.yml` to the repository root as `azure-pipelines.yml` (or merge into your existing pipeline).
+3. Copy `templates/copilotScripts/review-prompt.md` to `copilotScripts/review-prompt.md`.
+4. Link variable group `vg-dataverse-mcp-ci` to the pipeline in Azure DevOps.
+5. Run the pipeline and confirm the log line `Configured endpoint:` shows a real URL path.
+
+---
+
+## File Structure
+
+```
+templates/
+├── azure-pipelines.yml              # Pipeline definition
+└── copilotScripts/
+    └── review-prompt.md             # Copilot review prompt
+```
+
+---
+
+## Common Issues
+
+### Endpoint shows placeholder instead of real path
+
+**Symptom:** `Configured endpoint: https://org.crm.dynamics.com/$(dataverseMcpEndpointPath)`  
+**Cause:** Optional variable not set; unresolved macro remained literal.  
+**Fix:** The fallback logic in the template handles this automatically — no action needed.
+
+### Prompt rejected due to invalid characters
+
+**Symptom:** Custom prompt task fails because of unsupported characters.  
+**Fix:** Keep the review prompt ASCII-only and avoid double-quote characters.
+
+### MCP cannot validate schema
+
+**Symptom:** Review states Dataverse MCP is not reachable.  
+**Fix:** Verify `dataverseClientId`, `dataverseClientSecret`, `dataverseTenantId`, and `dataverseUrl`. Confirm the app is allowed in Dataverse MCP client settings.
+
+---
+
+## Security
+
+- Never print `dataverseClientSecret` in pipeline logs.
+- Store secrets only in Azure DevOps secret variables or Key Vault-linked variables.
+- Use least privilege for the Entra app registration.
+
+---
+
+## License
+
+MIT
+
+## Disclaimer
+
+Private project. Provided without warranty. Use at your own risk.
+
+---
+
+> Built with ❤️ for Dynamics 365 developers and architects.
